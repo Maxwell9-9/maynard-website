@@ -1,4 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import TrumpetScene from './TrumpetScene';
+import Download from './download/download-page';
+import brandImage from './assets/Colour_pop (1).png';
+
 
 // Note frequencies
 const noteFrequencies = {
@@ -7,14 +11,14 @@ const noteFrequencies = {
 };
 
 const styles = `
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+     { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #000000;
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
         overflow-x: hidden;
         }
         
@@ -25,6 +29,30 @@ const styles = `
             padding: 40px;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 32px;
+        }
+
+        .link-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .download-btn:hover {
+            background: rgb(234, 197, 9);
+            box-shadow: 0 0 15px rgba(234, 197, 9, 0.5);
+            color: blue;
+        }
+
+        .download-btn {
+            display: inline-block;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 25px;  
+            background: rgb(208, 179, 34);
+            text-decoration: none;
+            color: black;
+        }
+            
         const TrumpetSVG = ({ onValveDown }) => (
             <svg className="trumpet-svg" viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg" style={{width:'100%',height:'100%',filter:'drop-shadow(0 10px 20px rgba(0,0,0,0.4))'}}>
                 <defs>
@@ -74,11 +102,25 @@ const styles = `
             transition: transform 0.3s ease;
             cursor: pointer;
         }
+
         .trumpet:hover { transform: scale(1.02); }
         
         .valve { cursor: pointer; transition: transform 0.1s; }
         .valve:active { transform: translateY(5px); }
         .valve-pressed { transform: translateY(8px) !important; }
+
+        img {
+            height: 75px;
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2em;
+            margin-bottom: 15px;
+            font-family: 'Alex Brush';
+        }
         
         .controls-section {
             display: grid;
@@ -101,6 +143,22 @@ const styles = `
             text-align: center;
             font-weight: 600;
             letter-spacing: 1px;
+        }
+
+        .power-btn {
+            border: none;
+            background: none;
+            color: blue;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-size: 2em;
+        }
+
+        .power-btn.active { 
+            color: #ff4500; 
+            text-shadow: 0 0 10px #ff4500, 0 0 20px #ff4500, 0 0 30px #ff4500;
         }
         
         .articulation-options {
@@ -349,7 +407,7 @@ const styles = `
             .controls-section { grid-template-columns: 1fr; }
             .eq-container { grid-column: span 1; }
             .trumpet { width: 350px; height: 84px; }
-            .header h1 { font-size: 1.8em; }
+            .header h1 { font-size: 1.8em; color: #ffffff; }
         }
     `;
 
@@ -479,6 +537,7 @@ function playTrumpet({
 
 
 function App() {
+    const [path, setPath] = useState(window.location.pathname);
     const [power, setPower] = useState(false);
     const [articulation, setArticulation] = useState('legato');
     const [mute, setMute] = useState(false);
@@ -498,6 +557,12 @@ function App() {
         styleSheet.textContent = styles;
         document.head.appendChild(styleSheet);
         return () => { document.head.removeChild(styleSheet); };
+    }, []);
+
+    useEffect(() => {
+        const handlePopState = () => setPath(window.location.pathname);
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
     // Keyboard controls
@@ -599,19 +664,60 @@ function App() {
         });
     }
 
+    function navigateToDownloadPage(e) {
+        e.preventDefault();
+        window.history.pushState({}, '', '/download-page');
+        setPath('/download-page');
+    }
+
+    if (path === '/download-page') {
+        return <Download />;
+    }
+
     return (
         <div className="vst-container">
             <button className={"power-btn" + (power ? " active" : "")} title="Power On/Off" onClick={() => setPower(p => !p)}>
                 ⏻
-            </button>
+            </button >
+            <div className="link-row">
+                <a href='/download-page' onClick={navigateToDownloadPage} className='download-btn'>
+                    Download
+                </a>
+            </div>
             <div className="header">
-                <h1>🎺 Brass Master Pro</h1>
+                <h1><img src={brandImage} alt="Brass Master Pro" /> Maynard </h1>
+            </div>
+
+            {/* Keyboard hint */}
+            <div className="keyboard-hint">
+                <h3>Keyboard Controls</h3>
+                <p>
+                    <span className="key">A</span><span className="key">S</span><span className="key">D</span><span className="key">F</span><span className="key">G</span><span className="key">H</span><span className="key">J</span><span className="key">K</span> - Play Notes | 
+                    <span className="key">1</span><span className="key">2</span><span className="key">3</span> - Valves
+                </p>
+            </div>
+
+            <div style={{ marginTop: 20, marginBottom: 24, borderRadius: 16, overflow: 'hidden' }}>
+                <TrumpetScene />
             </div>
             <div className="trumpet-display">
                 <div className="trumpet" onClick={handleTrumpetClick}>
                     <trumpetSVG onValveDown={handleValveDown} />
                 </div>
             </div>
+
+            {/* Visualizer */}
+            <div className="visualizer">
+                {Array.from({ length: 30 }).map((_, i) => (
+                    <div
+                        className="bar"
+                        key={i}
+                        ref={el => barRefs.current[i] = el}
+                        style={{ height: '5px' }}
+                    />
+                ))}
+            </div>
+
             <div className="controls-section">
                 {/* Articulation */}
                 <div className="control-group">
@@ -658,6 +764,59 @@ function App() {
                             <div className="knob-value">{gain}%</div>
                         </div>
                         {/* Reverb Knob */}
+                                {/* Interactive Piano */}
+                                <div className="piano-keyboard" style={{ marginTop: 40, display: 'flex', justifyContent: 'center', gap: 8 }}>
+                                    {[
+                                        { key: 'a', solfege: 'Doh', color: '#ffd700' },
+                                        { key: 's', solfege: 'Rey', color: '#ffe066' },
+                                        { key: 'd', solfege: 'Mi', color: '#ffdca3' },
+                                        { key: 'f', solfege: 'Fah', color: '#b6e2d8' },
+                                        { key: 'g', solfege: 'Soh', color: '#a3d8ff' },
+                                        { key: 'h', solfege: 'Lah', color: '#d0bfff' },
+                                        { key: 'j', solfege: 'Ti', color: '#ffb3c6' },
+                                        { key: 'k', solfege: 'Doh+', color: '#ffd700' }
+                                    ].map(({ key, solfege, color }) => (
+                                        <div
+                                            key={key}
+                                            className="piano-key"
+                                            style={{
+                                                background: color,
+                                                borderRadius: 8,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                                width: 60,
+                                                height: 120,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: power ? 'pointer' : 'not-allowed',
+                                                opacity: power ? 1 : 0.5,
+                                                border: '2px solid #fff',
+                                                margin: '0 2px',
+                                                position: 'relative',
+                                            }}
+                                            onClick={() => {
+                                                if (!power) return;
+                                                playTrumpet({
+                                                    power,
+                                                    audioContext,
+                                                    eq,
+                                                    gain,
+                                                    reverb,
+                                                    dynamics,
+                                                    articulation,
+                                                    mute,
+                                                    frequency: noteFrequencies[key],
+                                                    duration: articulation === 'staccato' ? 0.2 : 0.5,
+                                                    animateBarsFn: () => animateBars(barRefs)
+                                                });
+                                            }}
+                                        >
+                                            <span style={{ fontSize: 28, fontWeight: 700, color: '#333', marginBottom: 6 }}>{solfege}</span>
+                                            <span style={{ fontSize: 18, color: '#555', fontFamily: 'monospace', background: 'rgba(255,255,255,0.5)', borderRadius: 4, padding: '2px 8px' }}>{key.toUpperCase()}</span>
+                                        </div>
+                                    ))}
+                                </div>
                         <div className="knob-container">
                             <div
                                 className="knob"
@@ -709,25 +868,6 @@ function App() {
                         })}
                     </div>
                 </div>
-            </div>
-            {/* Visualizer */}
-            <div className="visualizer">
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <div
-                        className="bar"
-                        key={i}
-                        ref={el => barRefs.current[i] = el}
-                        style={{ height: '5px' }}
-                    />
-                ))}
-            </div>
-            {/* Keyboard hint */}
-            <div className="keyboard-hint">
-                <h3>Keyboard Controls</h3>
-                <p>
-                    <span className="key">A</span><span className="key">S</span><span className="key">D</span><span className="key">F</span><span className="key">G</span><span className="key">H</span><span className="key">J</span><span className="key">K</span> - Play Notes | 
-                    <span className="key">1</span><span className="key">2</span><span className="key">3</span> - Valves
-                </p>
             </div>
         </div>
     );
